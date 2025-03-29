@@ -1,0 +1,169 @@
+Additional Details for WeeklyScheduler System
+13. Database Operations in Detail
+Query Patterns
+Optimized Joins: Complex queries like getWeeklyPlanComplete use multiple join operations
+Pagination: API endpoints for lists support limit and offset parameters
+Sorting: Default sorting applied (e.g., planning weeks sorted by year/week descending)
+Filtering: Multiple filter patterns implemented in the storage layer
+Transaction Handling
+Database Indexes
+The system utilizes strategic indexes:
+
+14. Authentication Flow Details
+Session Management
+Uses Express sessions stored in PostgreSQL
+Session configuration:
+Password Handling
+Passwords are hashed using Node.js crypto module with scrypt algorithm
+Salt generation uses 16 bytes of random data
+Implementation:
+Authentication Middleware
+isAuthenticated: Ensures user is logged in
+isAdmin: Ensures user is logged in and has admin privileges
+CSRF protection with SameSite cookies
+15. Error Handling Strategy
+Client-Side Error Handling
+React Query error handling with retry logic
+Centralized error handling in API requests:
+Server-Side Error Handling
+Express global error handler:
+Structured error responses:
+16. Performance Optimization
+Database Optimizations
+Connection pooling for database connections
+Prepared statements for frequent queries
+Strategic indexing on frequently queried columns
+Query result caching for static data
+Frontend Optimizations
+React Query caching with staleTime configuration
+Memoization of expensive computations using useMemo and useCallback
+Code splitting with lazy-loaded components:
+API Optimization
+Response compression using compression middleware
+HTTP caching headers for static resources
+Rate limiting for sensitive endpoints
+17. Security Implementation
+Input Validation
+Server-side validation with Zod schemas
+Client-side validation with React Hook Form and Zod
+Parameter sanitization before database operations
+Cross-Site Request Forgery (CSRF) Protection
+SameSite cookie policy
+Custom CSRF token validation for sensitive operations
+Content Security Policy
+Rate Limiting
+18. Client-Side State Management
+React Query Patterns
+Custom hooks for data fetching:
+Context Providers
+Authentication context:
+Persistent Query Cache
+Session storage persistence:
+19. PDF and Excel Export Implementation
+PDF Generation
+Uses PDFKit for PDF generation
+Custom styling for professional output
+Supports tables, images, and rich formatting
+Implementation in server/utils/enhanced-pdf-generator.ts
+Excel Export
+Uses ExcelJS library
+Features:
+Styled worksheets with formatting
+Dynamic cell merging
+Conditional formatting
+Header/footer customization
+Formula support
+Implementation in server/utils/excel-export.ts
+20. Mobile Responsiveness
+Responsive Design Strategy
+Mobile-first design approach
+Breakpoint system:
+sm: 640px (small devices)
+md: 768px (tablets)
+lg: 1024px (small desktops)
+xl: 1280px (large desktops)
+Responsive Components
+Responsive table alternatives for small screens
+Collapsible navigation on mobile
+Touch-friendly UI elements
+Stack layouts on small screens, grid layouts on larger screens
+21. Accessibility Features
+ARIA Attributes
+All interactive components include appropriate ARIA attributes
+Example from button component:
+Keyboard Navigation
+All interactive elements are keyboard accessible
+Focus management for modals and dialogs
+Skip links for screen reader users
+Color Contrast
+WCAG 2.1 AA compliant color contrast
+High contrast mode support
+Text resizing support without breaking layouts
+22. Data Validation Patterns
+Backend Validation
+Schema validation with Zod before database operations
+Type coercion and transformation:
+Frontend Validation
+Form validation using React Hook Form with Zod resolvers:
+23. Component Architecture
+Atomic Design Pattern
+Atoms: Basic UI components (Button, Input, Label)
+Molecules: Groups of atoms (FormField, InputWithLabel)
+Organisms: Complex components (TeacherCard, WeeklyPlanTable)
+Templates: Page layouts with placeholder components
+Pages: Templates with actual data
+Component Composition
+24. Custom Hooks and Utilities
+Authentication Hook
+Form Submission Hook
+Date Formatting Utils
+25. System Monitoring
+Logging Infrastructure
+Request logging with Morgan
+Application logging with custom logger:
+Performance Tracking
+API response time tracking
+Slow query logging
+Database connection pooling metrics
+26. API Documentation
+Swagger/OpenAPI Documentation
+Available at /api-docs endpoint
+Interactive API testing interface
+Comprehensive endpoint documentation
+Authentication requirement indicators
+Example request/response bodies
+API Versioning Strategy
+URL-based versioning (e.g., /api/v1/users)
+Version header support
+Backward compatibility considerations
+27. Backup and Disaster Recovery
+Automated Backups
+Daily database backups
+Weekly full system backups
+Retention policy: 7 daily, 4 weekly, 12 monthly
+Restore Procedures
+Database restore scripts
+Full system restore documentation
+Point-in-time recovery options
+Failover Strategy
+Database replication setup
+Read replicas for improved performance
+Automated health checks and alerts
+28. Customization Options
+Theming System
+Customizable color palette
+Theme switching support
+Dark mode implementation
+Custom logo placement
+Feature Toggles
+Runtime feature enabling/disabling
+Environment-based feature flags
+User-specific feature access
+Configuration System
+Environment variable configuration
+JSON configuration files
+Database-stored configuration
+UI for admin configuration management
+This additional documentation provides more detailed insights into the technical implementation, architecture decisions, and advanced features of the WeeklyScheduler system, complementing the previous comprehensive overview.
+
+Similar code found with 1 license type - View matches

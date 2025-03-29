@@ -1,0 +1,323 @@
+WeeklyScheduler System Documentation
+1. System Overview
+The WeeklyScheduler is a comprehensive web application designed to streamline lesson planning and teacher management for schools. It provides separate interfaces for administrators and teachers, allowing efficient creation and management of weekly lesson plans across multiple grades and subjects.
+
+Core Capabilities
+Role-based user management (Admins and Teachers)
+Grade and subject management
+Teacher assignments to grades and subjects
+Weekly planning periods management
+Structured lesson planning with daily breakdowns
+Plan exports in PDF and Excel formats
+Bulk user imports via CSV
+2. Architecture & Technology Stack
+Frontend
+Framework: React with TypeScript
+State Management: TanStack Query (React Query)
+UI Framework: Tailwind CSS with Shadcn/UI components
+Form Handling: React Hook Form with Zod validation
+Routing: React Router
+Backend
+Runtime: Node.js
+Framework: Express.js
+Authentication: Passport.js (session-based)
+Session Store: PostgreSQL session store
+Database
+DBMS: PostgreSQL
+ORM: Drizzle ORM
+Hosting Options:
+Neon (serverless PostgreSQL)
+Self-hosted PostgreSQL
+3. Database Structure
+Core Entities
+users
+Contains all user accounts (both admins and teachers)
+Primary fields:
+id: Serial primary key
+username: Unique username (login identifier)
+password: Hashed password
+fullName: User's full name
+email: Optional email address
+isAdmin: Boolean flag indicating admin privileges
+grades
+Represents school grade levels (e.g., "Grade 1", "Grade 2")
+Primary fields:
+id: Serial primary key
+name: Unique grade name
+subjects
+Represents academic subjects taught in the school
+Primary fields:
+id: Serial primary key
+name: Unique subject name
+teacher_grades
+Junction table for teacher-to-grade assignments
+Primary fields:
+id: Serial primary key
+teacherId: Foreign key to users
+gradeId: Foreign key to grades
+teacher_subjects
+Junction table for teacher-to-subject-within-grade assignments
+Primary fields:
+id: Serial primary key
+teacherId: Foreign key to users
+gradeId: Foreign key to grades
+subjectId: Foreign key to subjects
+planning_weeks
+Represents weekly planning periods
+Primary fields:
+id: Serial primary key
+weekNumber: Week number (1-52)
+year: Calendar year
+startDate: Start date (Monday)
+endDate: End date (Friday)
+isActive: Boolean indicating if teachers can edit plans for this week
+weekly_plans
+Represents a teacher's weekly plan for a specific grade, subject, and week
+Primary fields:
+id: Serial primary key
+teacherId: Foreign key to users
+gradeId: Foreign key to grades
+subjectId: Foreign key to subjects
+weekId: Foreign key to planning_weeks
+notes: Optional general notes for the week
+createdAt: Timestamp of creation
+updatedAt: Timestamp of last update
+daily_plans
+Contains daily details within a weekly plan
+Primary fields:
+id: Serial primary key
+weeklyPlanId: Foreign key to weekly_plans
+dayOfWeek: Integer (1=Monday through 5=Friday)
+topic: Main lesson topic (required)
+booksAndPages: Optional references from textbooks
+homework: Optional homework assignments
+homeworkDueDate: Optional due date for homework
+assignments: Optional in-class assignments/activities
+notes: Optional additional notes
+Entity Relationships
+A User (teacher) can be assigned to multiple Grades
+A User (teacher) can teach multiple Subjects within each assigned Grade
+A Weekly Plan belongs to one Teacher, one Grade, one Subject, and one Planning Week
+A Weekly Plan contains multiple Daily Plans (one for each day of the week)
+A Grade can have multiple Subjects taught within it
+A Grade can have multiple Teachers assigned to it
+4. API Structure
+Authentication Endpoints
+Method	Route	Description	Auth Required
+POST	/api/register	Register a new user	Admin only
+POST	/api/login	User login	No
+POST	/api/logout	User logout	Yes
+GET	/api/user	Get current user info	Yes
+User Management Endpoints
+Method	Route	Description	Auth Required
+GET	/api/users	List all users	Admin only
+DELETE	/api/users/:id	Delete user	Admin only
+PATCH	/api/users/:id/role	Update user role	Admin only
+PATCH	/api/users/:id	Update user profile	User or Admin
+POST	/api/users/import	Import users via CSV	Admin only
+Grade Management Endpoints
+Method	Route	Description	Auth Required
+GET	/api/grades	List all grades	Yes
+POST	/api/grades	Create a new grade	Admin only
+PUT	/api/grades/:id	Update a grade	Admin only
+DELETE	/api/grades/:id	Delete a grade	Admin only
+Subject Management Endpoints
+Method	Route	Description	Auth Required
+GET	/api/subjects	List all subjects	Yes
+POST	/api/subjects	Create a new subject	Admin only
+PUT	/api/subjects/:id	Update a subject	Admin only
+DELETE	/api/subjects/:id	Delete a subject	Admin only
+Teacher Assignment Endpoints
+Method	Route	Description	Auth Required
+GET	/api/teachers	List all teachers	Admin only
+POST	/api/teacher-grades	Assign teacher to grade	Admin only
+DELETE	/api/teacher-grades/:teacherId/:gradeId	Remove teacher from grade	Admin only
+GET	/api/teacher-grades/:teacherId	Get teacher's assigned grades	Yes
+GET	/api/grade-teachers/:gradeId	Get teachers assigned to grade	Admin only
+POST	/api/teacher-subjects	Assign teacher to subject	Admin only
+DELETE	/api/teacher-subjects/:teacherId/:gradeId/:subjectId	Remove teacher from subject	Admin only
+GET	/api/teacher-subjects/:teacherId/:gradeId	Get teacher's subjects in a grade	Yes
+Planning Week Endpoints
+Method	Route	Description	Auth Required
+GET	/api/planning-weeks	List all planning weeks	Yes
+GET	/api/planning-weeks/active	List active planning weeks	Yes
+POST	/api/planning-weeks	Create a new planning week	Admin only
+PUT	/api/planning-weeks/:id/toggle	Toggle week active status	Admin only
+DELETE	/api/planning-weeks/:id	Delete planning week	Admin only
+Weekly Plan Endpoints
+Method	Route	Description	Auth Required
+POST	/api/weekly-plans	Create a weekly plan	Yes
+GET	/api/weekly-plans/teacher/:teacherId	Get teacher's weekly plans	Teacher or Admin
+GET	/api/weekly-plans/grade/:gradeId/week/:weekId	Get plans by grade and week	Yes
+GET	/api/weekly-plans/:id	Get a specific weekly plan	Teacher or Admin
+GET	/api/weekly-plans/:id/complete	Get plan with daily details	Teacher or Admin
+PUT	/api/weekly-plans/:id/notes	Update weekly plan notes	Teacher or Admin
+Daily Plan Endpoints
+Method	Route	Description	Auth Required
+POST	/api/daily-plans	Create a daily plan	Yes
+PUT	/api/daily-plans/:id	Update a daily plan	Teacher or Admin
+GET	/api/daily-plans/weekly/:weeklyPlanId	Get daily plans for a weekly plan	Teacher or Admin
+Export Endpoints
+Method	Route	Description	Auth Required
+GET	/api/weekly-plans/:id/export-pdf	Export plan as PDF	Yes
+GET	/api/weekly-plans/:id/export-excel	Export plan as Excel	Yes
+5. UI Components
+Layout Components
+PageWrapper: Main layout wrapper with title and sidebar
+Sidebar: Navigation sidebar with dynamic menu based on user role
+Header: Top navigation bar with user menu
+Common Components
+Tables: Sortable, filterable data tables (teachers, grades, subjects, plans)
+Forms: Consistent form styling with validation
+Cards: Content cards with consistent styling
+Modals/Dialogs: For add/edit/delete operations
+Buttons: Primary, secondary, and destructive actions
+Badges: Status indicators
+Specialized Components
+WeeklyPlanTable: Interactive grid for weekly plan editing
+ConsolidatedWeeklyPlanView: Combined view of multiple plans
+UserImportCard: CSV import interface
+TeacherAssignmentList: Interface for managing teacher assignments
+6. User Roles & Permissions
+Administrator
+Can access:
+User management
+Grade management
+Subject management
+Teacher assignments
+Planning weeks management
+All weekly plans (view only)
+Cannot access:
+Edit plans created by teachers (unless explicitly granted)
+Teacher
+Can access:
+Personal profile management
+View assigned grades and subjects
+Create and edit weekly plans for assigned subjects
+View other teachers' plans within assigned grades
+Cannot access:
+User management
+Grade and subject management
+Teacher assignments
+Planning weeks management
+Plans for non-assigned grades/subjects
+7. Core Features
+User Management
+User Creation: Administrators can create teacher accounts
+Bulk Import: Import multiple users via CSV
+Role Management: Assign/revoke admin privileges
+Profile Management: Users can update their profiles
+Grade & Subject Management
+Create/Edit/Delete: Manage school grades and academic subjects
+Validation: Prevent deletion of grades/subjects in use
+Teacher Assignments
+Grade Assignment: Assign teachers to grades
+Subject Assignment: Assign teachers to subjects within grades
+Visualization: View all assignments in a clear interface
+Planning Week Management
+Week Creation: Create planning weeks with date ranges
+Active Status: Toggle weeks as active/inactive
+Permissions: Only active weeks can be edited by teachers
+Weekly Planning
+Plan Creation: Create weekly plans for assigned subjects
+Daily Details: Add detailed information for each day
+Topics & Materials: Specify lesson topics, books, and page references
+Homework: Assign homework with due dates
+Assignments: Document in-class assignments
+Notes: Add teaching notes for each day
+Exports
+PDF Export: Generate professional PDF documents of plans
+Excel Export: Export plans as spreadsheets
+Consolidated View: See all subjects' plans for a grade/week
+8. Deployment Options
+Local Development
+Node.js server with in-memory or local PostgreSQL database
+Self-Hosted Production
+Node.js server (with PM2 process manager)
+PostgreSQL database
+Reverse proxy (Nginx/Apache)
+SSL certificates for secure connections
+Cloud Deployment
+Neon Database
+Create a Neon account
+Set up a PostgreSQL database
+Configure environment variables with connection string
+Hosting Options
+Replit: Browser-based hosting for full application
+Vercel/Netlify: Frontend hosting with serverless functions
+Railway/Render/Fly.io: Full-stack application hosting
+9. Troubleshooting
+Common Issues
+Database Connection Errors
+Verify DATABASE_URL is correct
+Check for network connectivity issues
+Ensure database service is running
+Authentication Issues
+Verify SESSION_SECRET is properly set
+Check cookie settings
+Clear browser cookies and try again
+Weekly Plan Creation Problems
+Verify the teacher is assigned to the grade/subject
+Check if planning week is active
+Check browser console for specific error messages
+10. Development Guidelines
+Code Structure
+Server: Express.js routes and middleware
+Client: React components and hooks
+Shared: Common types and schemas
+State Management
+Use React Query for server state
+Use React Context for global UI state
+Use component state for local UI state
+Form Validation
+Use Zod schemas for validation
+Use React Hook Form for form state management
+API Requests
+Use the custom apiRequest utility for all requests
+Handle loading and error states appropriately
+Database Operations
+Use the storage layer abstraction (IStorage interface)
+Use transactions for operations that modify multiple tables
+Validate input data before database operations
+Testing
+Unit tests for utility functions
+Integration tests for API endpoints
+End-to-end tests for critical workflows
+11. Customization and Extension
+Adding New Features
+Define feature requirements
+Update database schema if necessary
+Create or modify API endpoints
+Implement UI components
+Add appropriate permissions
+Styling Customization
+Modify Tailwind configuration for global style changes
+Update component-specific styles for targeted changes
+Create themed variations of components as needed
+Localization
+Extract text strings into language files
+Implement i18n library integration
+Add language selection in user preferences
+12. Best Practices
+Security
+Use HTTPS in production
+Implement proper authentication and authorization
+Validate all input data
+Use parameterized queries
+Keep dependencies up-to-date
+Performance
+Optimize database queries
+Implement proper indexing
+Use connection pooling
+Implement caching where appropriate
+Lazy-load components and data
+Backup and Recovery
+Regular database backups
+Implement database restoration procedures
+Document recovery processes
+Monitoring
+Log application events
+Set up error tracking
+Monitor server health
+Track database performance
+This documentation provides a comprehensive overview of the WeeklyScheduler system. For specific implementation details, refer to the code comments and additional documentation in the project repository.
