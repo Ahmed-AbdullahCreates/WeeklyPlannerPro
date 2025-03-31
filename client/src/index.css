@@ -1,7 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
+@import './styles/animations.css';
 @layer base {
   * {
     @apply border-border;

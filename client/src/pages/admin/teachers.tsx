@@ -12,7 +12,7 @@ import { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, UserPlus, UserCheck, UserX, ShieldCheck, ShieldOff, Trash2, Upload } from "lucide-react";
+import { Plus, Pencil, UserPlus, UserCheck, UserX, ShieldCheck, ShieldOff, Trash2, Upload, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -244,28 +244,63 @@ export default function Teachers() {
   
   return (
     <PageWrapper title="Teachers">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 text-transparent bg-clip-text">
-          Manage Teachers
-        </h1>
-        <p className="text-neutral-600 mt-2">Add, edit, and manage teacher accounts and their assignments</p>
+      {/* Ultra-Enhanced Header Section with Dynamic Visual Elements */}
+      <div className="relative mb-10 overflow-hidden">
+        {/* Enhanced decorative background elements with better positioning and opacity */}
+        <div className="absolute -top-20 right-0 w-[30rem] h-[30rem] bg-gradient-to-br from-indigo-50/40 to-indigo-100/20 rounded-full blur-3xl -z-10 opacity-80"></div>
+        <div className="absolute -bottom-32 -left-20 w-[20rem] h-[20rem] bg-gradient-to-tr from-indigo-100/10 to-slate-100/20 rounded-full blur-3xl -z-10 opacity-40"></div>
+        
+        {/* Additional subtle decorative elements */}
+        <div className="absolute top-10 right-1/4 w-6 h-6 rounded-full bg-indigo-200/20 blur-md"></div>
+        <div className="absolute bottom-5 right-1/3 w-4 h-4 rounded-full bg-indigo-300/20 blur-sm"></div>
+        
+        <div className="relative z-10">
+          {/* Enhanced category tag with better visual treatment */}
+          <div className="inline-flex items-center mb-4 px-3 py-1.5 rounded-full bg-indigo-50/90 text-indigo-600 text-xs font-medium shadow-sm">
+            <svg className="h-3.5 w-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path>
+            </svg>
+            <span>User Management</span>
+          </div>
+          
+          {/* Enhanced title with better typography and gradient */}
+          <h1 className="text-3xl font-bold mb-2">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600">
+              Manage Teachers
+            </span>
+          </h1>
+          
+          {/* Enhanced description with better width control and typography */}
+          <p className="text-slate-600 max-w-2xl text-lg leading-relaxed">
+            Add, edit, and manage teacher accounts and their assignments to grades and subjects.
+          </p>
+        </div>
       </div>
       
-      <div className="mb-6 flex flex-col sm:flex-row justify-end items-start sm:items-center gap-3">
-        <div className="flex space-x-2">
+      {/* Enhanced Action Bar with better spacing and visual hierarchy */}
+      <div className="mb-8 flex flex-wrap justify-between items-center gap-4 bg-white/50 p-4 rounded-xl border border-slate-200/50 shadow-sm">
+        {/* Enhanced button group with better visual relationship */}
+        <div className="flex flex-wrap gap-3">
+          {/* Enhanced Add Teacher button */}
           <Dialog open={isAddTeacherOpen} onOpenChange={setIsAddTeacherOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90">
-                <UserPlus className="mr-2 h-4 w-4" /> Add Teacher
+              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm relative overflow-hidden group">
+                <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-200"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600/20 to-transparent blur-sm group-hover:opacity-100 opacity-0 transition-opacity duration-300"></div>
+                <div className="relative z-10 flex items-center">
+                  <UserPlus className="mr-2 h-4 w-4" /> 
+                  <span>Add Teacher</span>
+                </div>
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="border-slate-200">
               <DialogHeader>
-                <DialogTitle>Add New Teacher</DialogTitle>
+                <DialogTitle className="text-indigo-700">Add New Teacher</DialogTitle>
                 <DialogDescription>
                   Create a new teacher account to give them access to the weekly planner system.
                 </DialogDescription>
               </DialogHeader>
+              
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <FormField
@@ -330,7 +365,11 @@ export default function Teachers() {
                     )}
                   />
                   <DialogFooter>
-                    <Button type="submit" disabled={addTeacher.isPending}>
+                    <Button 
+                      type="submit" 
+                      disabled={addTeacher.isPending}
+                      className="bg-indigo-600 hover:bg-indigo-700"
+                    >
                       {addTeacher.isPending ? "Adding..." : "Add Teacher"}
                     </Button>
                   </DialogFooter>
@@ -339,15 +378,23 @@ export default function Teachers() {
             </DialogContent>
           </Dialog>
           
+          {/* Enhanced Import Teachers button */}
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">
-                <Upload className="mr-2 h-4 w-4" /> Import Users
+              <Button 
+                variant="outline" 
+                className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 shadow-sm relative overflow-hidden group"
+              >
+                <div className="absolute inset-0 bg-indigo-50 opacity-0 group-hover:opacity-10 transition-opacity duration-200"></div>
+                <div className="relative z-10 flex items-center">
+                  <Upload className="mr-2 h-4 w-4 group-hover:translate-y-[-1px] transition-transform duration-200" /> 
+                  <span>Import Teachers</span>
+                </div>
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md border-slate-200">
               <DialogHeader>
-                <DialogTitle>Import Teachers</DialogTitle>
+                <DialogTitle className="text-indigo-700">Import Teachers</DialogTitle>
                 <DialogDescription>
                   Import multiple teachers from a CSV file.
                 </DialogDescription>
@@ -356,45 +403,104 @@ export default function Teachers() {
             </DialogContent>
           </Dialog>
         </div>
+        
+        {/* Enhanced teacher count indicator with animated element */}
+        <div className="text-sm text-slate-500 flex items-center bg-slate-50/80 px-3 py-1.5 rounded-full">
+          <div className="w-3 h-3 rounded-full bg-indigo-100 mr-2 flex items-center justify-center relative">
+            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 absolute animate-pulse-subtle"></div>
+          </div>
+          <span className="font-medium text-indigo-600">{teachers.length}</span>
+          <span className="ml-1">teachers registered</span>
+        </div>
       </div>
       
-      <Card>
-        <CardHeader className="py-4">
-          <CardTitle className="text-lg">Teachers</CardTitle>
+      {/* Super-Enhanced Card with frosted glass effect and improved shadows */}
+      <Card className="border-slate-200/60 shadow-sm overflow-hidden rounded-xl backdrop-blur-[2px] bg-white/90">
+        {/* Enhanced card header with better gradient and alignment */}
+        <CardHeader className="py-4 bg-gradient-to-r from-slate-50/95 to-white/95 border-b border-slate-200/60 flex flex-row items-center justify-between">
+          <CardTitle className="text-lg text-slate-800 font-medium flex items-center">
+            <div className="p-1.5 rounded-md bg-indigo-50/80 text-indigo-500 mr-3">
+              <Users className="h-5 w-5" />
+            </div>
+            <span className="text-indigo-600 font-semibold">Teachers</span>
+            <span className="ml-1.5 text-slate-600">Directory</span>
+          </CardTitle>
+          
+          {/* Enhanced search with better interaction feedback */}
+          <div className="relative w-64 group">
+            <Input 
+              placeholder="Search teachers..."
+              className="pl-8 border-slate-200 focus:border-indigo-300 focus:ring-1 focus:ring-indigo-300/30 h-9 text-sm transition-all duration-200 group-hover:border-slate-300"
+            />
+            <div className="absolute left-2.5 top-2.5 text-slate-400 group-focus-within:text-indigo-500 transition-colors duration-200">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-auto">
+        
+        {/* Enhanced table with subtle hover effects and better spacing */}
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Username</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Assigned Grades</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+              <TableHeader className="bg-slate-50/70 border-b border-slate-200/60">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="text-slate-500 font-medium py-3 text-sm">Name</TableHead>
+                  <TableHead className="text-slate-500 font-medium py-3 text-sm">Username</TableHead>
+                  <TableHead className="text-slate-500 font-medium py-3 text-sm">Role</TableHead>
+                  <TableHead className="text-slate-500 font-medium py-3 text-sm">Assigned Grades</TableHead>
+                  <TableHead className="text-slate-500 font-medium py-3 text-sm text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
+              
               <TableBody>
                 {teachers.map(teacher => (
-                  <TableRow key={teacher.id}>
-                    <TableCell className="font-medium">{teacher.fullName}</TableCell>
-                    <TableCell>{teacher.username}</TableCell>
+                  <TableRow 
+                    key={teacher.id} 
+                    className="hover:bg-slate-50/80 border-b border-slate-100/80 transition-colors group"
+                  >
+                    <TableCell className="font-medium text-slate-700 group-hover:text-slate-900 transition-colors">
+                      {teacher.fullName}
+                    </TableCell>
+                    <TableCell className="text-slate-600 group-hover:text-slate-700 transition-colors">
+                      {teacher.username}
+                    </TableCell>
                     <TableCell>
+                      {/* Enhanced badges with better visual feedback */}
                       {teacher.isAdmin ? (
-                        <Badge variant="default" className="bg-blue-500">Admin</Badge>
+                        <Badge variant="default" className="bg-indigo-500 hover:bg-indigo-600 text-[10px] group-hover:shadow-sm transition-all">
+                          Administrator
+                        </Badge>
                       ) : (
-                        <Badge variant="outline">Teacher</Badge>
+                        <Badge variant="outline" className="text-slate-600 border-slate-200 bg-slate-50 text-[10px] group-hover:bg-white group-hover:border-slate-300 transition-all">
+                          Teacher
+                        </Badge>
                       )}
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-1.5">
+                        {/* Enhanced grade badges with better visual feedback */}
                         {teacherGradesMap[teacher.id]?.map(grade => (
-                          <Badge key={grade.id} variant="secondary">{grade.name}</Badge>
-                        )) || <span className="text-neutral-500 text-sm">No grades assigned</span>}
+                          <Badge 
+                            key={grade.id} 
+                            variant="secondary" 
+                            className="bg-slate-100 text-slate-600 hover:bg-slate-200 text-[10px] py-0 px-2 group-hover:bg-slate-100/80 transition-colors"
+                          >
+                            {grade.name}
+                          </Badge>
+                        )) || 
+                        <span className="text-slate-400 text-xs italic flex items-center">
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-300/80 mr-1.5"></span>
+                          No grades assigned
+                        </span>}
                       </div>
                     </TableCell>
+                    
+                    {/* Enhanced action buttons with better hover effects */}
                     <TableCell className="text-right">
-                      <div className="flex justify-end space-x-1">
+                      <div className="flex justify-end space-x-2">
+                        {/* Enhanced assign to grade button */}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -402,11 +508,13 @@ export default function Teachers() {
                             setSelectedTeacher(teacher);
                             setIsAssignGradeOpen(true);
                           }}
+                          className="hover:bg-indigo-50 hover:text-indigo-600 h-8 w-8 p-0 opacity-80 group-hover:opacity-100 transition-all"
                           title="Assign to Grade"
                         >
                           <UserCheck className="h-4 w-4" />
                         </Button>
                         
+                        {/* Enhanced assign to subject button */}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -414,54 +522,53 @@ export default function Teachers() {
                             setSelectedTeacher(teacher);
                             setIsAssignSubjectOpen(true);
                           }}
-                          title="Assign to Subject"
                           disabled={!teacherGradesMap[teacher.id]?.length}
+                          className="hover:bg-indigo-50 h-8 w-8 p-0 disabled:opacity-30 opacity-80 group-hover:opacity-100 transition-all"
+                          title="Assign to Subject"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         
+                        {/* Enhanced delete button */}
                         {teacher.id !== currentUser?.id && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                toggleUserRole.mutate({
-                                  userId: teacher.id,
-                                  isAdmin: !teacher.isAdmin
-                                });
-                              }}
-                              title={teacher.isAdmin ? "Remove Admin" : "Make Admin"}
-                            >
-                              {teacher.isAdmin ? (
-                                <ShieldOff className="h-4 w-4 text-red-500" />
-                              ) : (
-                                <ShieldCheck className="h-4 w-4 text-blue-500" />
-                              )}
-                            </Button>
-                            
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedTeacher(teacher);
-                                setIsDeleteConfirmOpen(true);
-                              }}
-                              title="Delete User"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedTeacher(teacher);
+                              setIsDeleteConfirmOpen(true);
+                            }}
+                            title="Delete User"
+                            className="hover:bg-rose-50 hover:text-rose-600 h-8 w-8 p-0 opacity-80 group-hover:opacity-100 transition-all"
+                          >
+                            <Trash2 className="h-4 w-4 text-rose-500" />
+                          </Button>
                         )}
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
                 
+                {/* Enhanced Empty State */}
                 {teachers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-neutral-500">
-                      No teachers found. Add your first teacher to get started.
+                    <TableCell colSpan={5} className="h-52 text-center">
+                      <div className="flex flex-col items-center justify-center text-slate-500 py-10">
+                        <div className="h-20 w-20 rounded-full bg-slate-50 flex items-center justify-center mb-3 border border-slate-100">
+                          <UserPlus className="h-8 w-8 text-indigo-200" />
+                        </div>
+                        <p className="font-medium text-slate-600">No teachers found</p>
+                        <p className="text-xs text-slate-400 mt-1 max-w-sm">
+                          Add your first teacher to get started with class assignments and weekly planning
+                        </p>
+                        <Button 
+                          onClick={() => setIsAddTeacherOpen(true)} 
+                          className="mt-4 bg-indigo-500 hover:bg-indigo-600"
+                          size="sm"
+                        >
+                          <UserPlus className="h-4 w-4 mr-2" /> Add Teacher
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )}
@@ -471,11 +578,14 @@ export default function Teachers() {
         </CardContent>
       </Card>
       
-      {/* Assign to Grade Dialog */}
+      {/* Enhanced Assign to Grade Dialog */}
       <Dialog open={isAssignGradeOpen} onOpenChange={setIsAssignGradeOpen}>
-        <DialogContent>
+        <DialogContent className="border-slate-200">
           <DialogHeader>
-            <DialogTitle>Assign to Grade</DialogTitle>
+            <DialogTitle className="text-indigo-700 flex items-center">
+              <UserCheck className="h-5 w-5 text-indigo-500 mr-2" /> 
+              Assign to Grade
+            </DialogTitle>
             <DialogDescription>
               Assign {selectedTeacher?.fullName} to a grade.
             </DialogDescription>
@@ -544,10 +654,11 @@ export default function Teachers() {
             </div>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button 
               variant="outline" 
               onClick={() => setIsAssignGradeOpen(false)}
+              className="border-slate-200 text-slate-700 hover:bg-slate-50"
             >
               Cancel
             </Button>
@@ -561,6 +672,7 @@ export default function Teachers() {
                 }
               }}
               disabled={!selectedGradeId || assignGrade.isPending}
+              className="bg-indigo-600 hover:bg-indigo-700"
             >
               {assignGrade.isPending ? "Assigning..." : "Assign"}
             </Button>
@@ -568,11 +680,14 @@ export default function Teachers() {
         </DialogContent>
       </Dialog>
       
-      {/* Assign to Subject Dialog */}
+      {/* Enhanced Assign to Subject Dialog */}
       <Dialog open={isAssignSubjectOpen} onOpenChange={setIsAssignSubjectOpen}>
-        <DialogContent>
+        <DialogContent className="border-slate-200">
           <DialogHeader>
-            <DialogTitle>Assign to Subject</DialogTitle>
+            <DialogTitle className="text-indigo-700 flex items-center">
+              <Pencil className="h-5 w-5 text-indigo-500 mr-2" /> 
+              Assign to Subject
+            </DialogTitle>
             <DialogDescription>
               Assign {selectedTeacher?.fullName} to a subject within a grade.
             </DialogDescription>
@@ -615,10 +730,11 @@ export default function Teachers() {
             </div>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button 
               variant="outline" 
               onClick={() => setIsAssignSubjectOpen(false)}
+              className="border-slate-200 text-slate-700 hover:bg-slate-50"
             >
               Cancel
             </Button>
@@ -633,6 +749,7 @@ export default function Teachers() {
                 }
               }}
               disabled={!selectedGradeId || !selectedSubjectId || assignSubject.isPending}
+              className="bg-indigo-600 hover:bg-indigo-700"
             >
               {assignSubject.isPending ? "Assigning..." : "Assign Subject"}
             </Button>
@@ -640,27 +757,30 @@ export default function Teachers() {
         </DialogContent>
       </Dialog>
       
-      {/* Delete Confirmation Dialog */}
+      {/* Enhanced Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="border-rose-100">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the account for {selectedTeacher?.fullName}.
-              This action cannot be undone.
+            <div className="bg-rose-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="h-6 w-6 text-rose-500" />
+            </div>
+            <AlertDialogTitle className="text-rose-600 text-center">Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              This will permanently delete the account for <span className="font-medium">{selectedTeacher?.fullName}</span>.
+              <br />This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel className="text-slate-700 hover:bg-slate-50 border-slate-200">Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-500 hover:bg-red-600"
+              className="bg-rose-500 hover:bg-rose-600 text-white"
               onClick={() => {
                 if (selectedTeacher) {
                   deleteUser.mutate(selectedTeacher.id);
                 }
               }}
             >
-              {deleteUser.isPending ? "Deleting..." : "Delete"}
+              {deleteUser.isPending ? "Deleting..." : "Yes, Delete User"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
