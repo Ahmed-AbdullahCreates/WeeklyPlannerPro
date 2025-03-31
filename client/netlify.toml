@@ -1,6 +1,6 @@
 [build]
+  command = "CI= npm run build"
   publish = "dist"
-  command = "npm run build"
 
 [[redirects]]
   from = "/*"
@@ -11,7 +11,7 @@
 [[headers]]
   for = "/*"
     [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
+    Cache-Control = "no-cache"
 
 [build.processing]
   skip_processing = false
