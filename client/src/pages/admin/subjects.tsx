@@ -1,58 +1,75 @@
-import { useState } from "react";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Subject } from "@shared/schema";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2 } from "lucide-react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Plus, Pencil, Trash2, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Subject, insertSubjectSchema } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { getSubjectTypeDisplay } from "@/utils/subject-utils";
 
-type SubjectFormValues = z.infer<typeof insertSubjectSchema>;
+const subjectSchema = z.object({
+  name: z.string().min(1, "Subject name is required"),
+  type: z.string().optional(),
+});
+
+type SubjectFormValues = z.infer<typeof subjectSchema>;
 
 export default function Subjects() {
   const { toast } = useToast();
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
-
-  // Forms
-  const addForm = useForm<SubjectFormValues>({
-    resolver: zodResolver(insertSubjectSchema),
+  const [isAddSubjectOpen, setIsAddSubjectOpen] = useState(false);
+  const [isEditSubjectOpen, setIsEditSubjectOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  
+  const subjectTypes = [
+    { value: "standard", label: "Standard Subject" },
+    { value: "art", label: "Art" },
+    { value: "pe", label: "PE" }
+  ];
+  
+  const form = useForm<SubjectFormValues>({
+    resolver: zodResolver(subjectSchema),
     defaultValues: {
       name: "",
       type: "standard",
     },
   });
-
+  
   const editForm = useForm<SubjectFormValues>({
-    resolver: zodResolver(insertSubjectSchema),
+    resolver: zodResolver(subjectSchema),
     defaultValues: {
-      name: "",
-      type: "standard",
+      name: selectedSubject?.name || "",
+      type: selectedSubject?.type || "standard",
     },
   });
-
+  
+  // Update edit form when selected subject changes
+  useEffect(() => {
+    if (selectedSubject) {
+      editForm.setValue("name", selectedSubject.name);
+      editForm.setValue("type", selectedSubject.type || "standard");
+    }
+  }, [selectedSubject, editForm]);
+  
   // Fetch subjects
-  const { data: subjects = [], isLoading } = useQuery<Subject[]>({
+  const { data: subjects = [] } = useQuery<Subject[]>({
     queryKey: ["/api/subjects"],
   });
-
-  // Create subject
-  const createSubject = useMutation({
+  
+  // Add subject
+  const addSubject = useMutation({
     mutationFn: async (data: SubjectFormValues) => {
       const res = await apiRequest("POST", "/api/subjects", data);
       return await res.json();
@@ -60,11 +77,11 @@ export default function Subjects() {
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Subject created successfully",
+        description: "Subject added successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/subjects"] });
-      setIsAddDialogOpen(false);
-      addForm.reset();
+      setIsAddSubjectOpen(false);
+      form.reset();
     },
     onError: (error: any) => {
       toast({
@@ -74,11 +91,11 @@ export default function Subjects() {
       });
     },
   });
-
+  
   // Update subject
   const updateSubject = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: SubjectFormValues }) => {
-      const res = await apiRequest("PUT", `/api/subjects/${id}`, data);
+    mutationFn: async ({ id, data }: { id: number, data: SubjectFormValues }) => {
+      const res = await apiRequest("PATCH", `/api/subjects/${id}`, data);
       return await res.json();
     },
     onSuccess: () => {
@@ -87,8 +104,7 @@ export default function Subjects() {
         description: "Subject updated successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/subjects"] });
-      setIsEditDialogOpen(false);
-      editForm.reset();
+      setIsEditSubjectOpen(false);
     },
     onError: (error: any) => {
       toast({
@@ -98,11 +114,15 @@ export default function Subjects() {
       });
     },
   });
-
+  
   // Delete subject
   const deleteSubject = useMutation({
-    mutationFn: async (id: number) => {
-      const res = await apiRequest("DELETE", `/api/subjects/${id}`);
+    mutationFn: async (subjectId: number) => {
+      const res = await apiRequest("DELETE", `/api/subjects/${subjectId}`);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to delete subject");
+      }
       return await res.json();
     },
     onSuccess: () => {
@@ -111,7 +131,7 @@ export default function Subjects() {
         description: "Subject deleted successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/subjects"] });
-      setIsDeleteAlertOpen(false);
+      setIsDeleteConfirmOpen(false);
       setSelectedSubject(null);
     },
     onError: (error: any) => {
@@ -122,170 +142,161 @@ export default function Subjects() {
       });
     },
   });
-
-  // Handle edit subject
-  const handleEditSubject = (subject: Subject) => {
-    setSelectedSubject(subject);
-    editForm.reset({
-      name: subject.name,
-      type: subject.type,
-    });
-    setIsEditDialogOpen(true);
+  
+  const onSubmit = (data: SubjectFormValues) => {
+    addSubject.mutate(data);
   };
-
-  // Submit handlers
-  const onAddSubmit = (data: SubjectFormValues) => {
-    createSubject.mutate(data);
-  };
-
+  
   const onEditSubmit = (data: SubjectFormValues) => {
     if (selectedSubject) {
       updateSubject.mutate({ id: selectedSubject.id, data });
     }
   };
+  
+  // Simplified badge styling
+  const getSubjectTypeBadge = (type: string | undefined) => {
+    const types = {
+      art: "bg-violet-50 text-violet-700",
+      pe: "bg-emerald-50 text-emerald-700",
+      language: "bg-sky-50 text-sky-700",
+      standard: "bg-slate-50 text-slate-700"
+    };
+
+    return (
+      <Badge className={cn(
+        types[type as keyof typeof types] || types.standard,
+        "px-2.5 py-0.5 font-medium"
+      )}>
+        {type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Standard'}
+      </Badge>
+    );
+  };
 
   return (
     <PageWrapper title="Subjects">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 text-transparent bg-clip-text">
-          Manage Subjects
-        </h1>
-        <p className="text-neutral-600 mt-2">Add, edit, and delete academic subjects for the school</p>
+      {/* Header Section */}
+      <div className="relative mb-8 overflow-hidden">
+        <div className="absolute -z-10 inset-0">
+          <div className="absolute -top-20 right-0 w-[800px] h-[500px] bg-gradient-to-br from-indigo-50/50 to-transparent rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="relative z-10">
+          <div className="inline-flex items-center mb-4 px-3 py-1.5 rounded-full bg-indigo-50/90 text-indigo-600 text-xs font-medium shadow-sm border border-indigo-100/50">
+            <BookOpen className="h-3.5 w-3.5 mr-1.5" />
+            <span>Subject Management</span>
+          </div>
+          <h1 className="text-2xl font-bold mb-2 text-indigo-600">
+            Manage Subjects
+          </h1>
+          <p className="text-slate-600 max-w-2xl">
+            Create and manage subjects taught at your school.
+          </p>
+        </div>
       </div>
 
-      <div className="mb-6 flex justify-end">
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+      {/* Action Bar */}
+      <div className="mb-6 flex justify-between items-center">
+        <Dialog open={isAddSubjectOpen} onOpenChange={setIsAddSubjectOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90">
+            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
               <Plus className="mr-2 h-4 w-4" /> Add Subject
             </Button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Subject</DialogTitle>
-              <DialogDescription>
-                Create a new academic subject for the school.
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...addForm}>
-              <form onSubmit={addForm.handleSubmit(onAddSubmit)} className="space-y-4">
-                <FormField
-                  control={addForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Subject Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Mathematics" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={addForm.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Subject Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="standard">Standard</SelectItem>
-                          <SelectItem value="art">Art</SelectItem>
-                          <SelectItem value="pe">PE</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <DialogFooter>
-                  <Button type="submit" disabled={createSubject.isPending}>
-                    {createSubject.isPending ? "Adding..." : "Add Subject"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
+          {/* ...existing dialog content... */}
         </Dialog>
       </div>
 
-      <Card>
-        <CardHeader className="py-4">
-          <CardTitle className="text-lg">Subjects</CardTitle>
+      {/* Main Card */}
+      <Card className="border-slate-200 shadow-sm overflow-hidden">
+        <CardHeader className="py-4 bg-slate-50 border-b border-slate-200 flex flex-row items-center">
+          <CardTitle className="text-lg text-slate-800 font-medium flex items-center">
+            <BookOpen className="h-5 w-5 text-indigo-500 mr-2" />
+            <span>Subject Directory</span>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Subject Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {subjects.map((subject) => (
-                  <TableRow key={subject.id}>
-                    <TableCell className="font-medium">{subject.name}</TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={subject.type === "standard" ? "outline" : 
-                                (subject.type === "art" ? "secondary" : "default")}
+
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader className="bg-slate-50/70 border-b border-slate-200">
+              <TableRow>
+                <TableHead className="text-slate-500 font-medium py-3 text-sm">Subject Name</TableHead>
+                <TableHead className="text-slate-500 font-medium py-3 text-sm">Type</TableHead>
+                <TableHead className="text-slate-500 font-medium py-3 text-sm text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {subjects.map((subject) => (
+                <TableRow 
+                  key={subject.id}
+                  className="border-b border-slate-100"
+                >
+                  <TableCell className="font-medium text-slate-900">
+                    {subject.name}
+                  </TableCell>
+                  <TableCell>{getSubjectTypeBadge(subject.type)}</TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedSubject(subject);
+                          setIsEditSubjectOpen(true);
+                        }}
+                        className="h-8 w-8 p-0 hover:bg-indigo-50 hover:text-indigo-600"
                       >
-                        {getSubjectTypeDisplay(subject.type)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditSubject(subject)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedSubject(subject);
-                            setIsDeleteAlertOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {subjects.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center py-8 text-neutral-500">
-                      No subjects found. Add your first subject to get started.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedSubject(subject);
+                          setIsDeleteConfirmOpen(true);
+                        }}
+                        className="h-8 w-8 p-0 hover:bg-rose-50 hover:text-rose-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+
+              {/* Empty State */}
+              {subjects.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={3} className="h-40 text-center">
+                    <div className="flex flex-col items-center justify-center text-slate-500 py-6">
+                      <BookOpen className="h-8 w-8 text-slate-300 mb-2" />
+                      <p className="text-slate-600">No subjects found</p>
+                      <p className="text-xs text-slate-400 mt-1">Add your first subject to get started</p>
+                      <Button 
+                        onClick={() => setIsAddSubjectOpen(true)} 
+                        className="mt-4 bg-indigo-600 hover:bg-indigo-700"
+                        size="sm"
+                      >
+                        <Plus className="h-4 w-4 mr-2" /> Add Subject
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
-      {/* Edit Subject Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+      {/* Modern Dialog Styling */}
+      <Dialog open={isEditSubjectOpen} onOpenChange={setIsEditSubjectOpen}>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Edit Subject</DialogTitle>
-            <DialogDescription>
-              Update the subject name and type.
+            <DialogTitle className="text-xl font-semibold">Edit Subject</DialogTitle>
+            <DialogDescription className="text-slate-600">
+              Make changes to {selectedSubject?.name}
             </DialogDescription>
           </DialogHeader>
+          
           <Form {...editForm}>
             <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
               <FormField
@@ -293,39 +304,49 @@ export default function Subjects() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Subject Name</FormLabel>
+                    <FormLabel>Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Mathematics" {...field} />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              
               <FormField
                 control={editForm.control}
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Subject Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>Type</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="standard">Standard</SelectItem>
-                        <SelectItem value="art">Art</SelectItem>
-                        <SelectItem value="pe">PE</SelectItem>
+                        {subjectTypes.map(type => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              
               <DialogFooter>
-                <Button type="submit" disabled={updateSubject.isPending}>
-                  {updateSubject.isPending ? "Updating..." : "Update Subject"}
+                <Button variant="outline" onClick={() => setIsEditSubjectOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  {updateSubject.isPending ? "Saving..." : "Save changes"}
                 </Button>
               </DialogFooter>
             </form>
@@ -333,23 +354,30 @@ export default function Subjects() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
-        <AlertDialogContent>
+      {/* Modern Alert Dialog */}
+      <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <AlertDialogContent className="sm:max-w-[425px]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the subject "{selectedSubject?.name}".
-              This action cannot be undone.
+            <div className="mx-auto w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mb-4">
+              <Trash2 className="h-5 w-5 text-red-600" />
+            </div>
+            <AlertDialogTitle className="text-center text-lg font-semibold">
+              Delete Subject
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-slate-600">
+              Are you sure you want to delete <span className="font-medium text-slate-900">{selectedSubject?.name}</span>?
+              <br />This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-500 hover:bg-red-600"
+          <AlertDialogFooter className="sm:justify-center gap-2">
+            <AlertDialogCancel className="border-slate-200">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-red-600 hover:bg-red-700 text-white"
               onClick={() => selectedSubject && deleteSubject.mutate(selectedSubject.id)}
             >
-              {deleteSubject.isPending ? "Deleting..." : "Delete"}
+              {deleteSubject.isPending ? "Deleting..." : "Delete Subject"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,53 +1,63 @@
-import { useState } from "react";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Users } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Grade } from "@shared/schema";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { useState, useEffect } from "react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Plus, Pencil, Trash2, GraduationCap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Grade, insertGradeSchema } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
-type GradeFormValues = z.infer<typeof insertGradeSchema>;
+const gradeSchema = z.object({
+  name: z.string().min(1, "Grade name is required"),
+});
+
+type GradeFormValues = z.infer<typeof gradeSchema>;
 
 export default function Grades() {
   const { toast } = useToast();
   const [selectedGrade, setSelectedGrade] = useState<Grade | null>(null);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
-
-  // Forms
-  const addForm = useForm<GradeFormValues>({
-    resolver: zodResolver(insertGradeSchema),
+  const [isAddGradeOpen, setIsAddGradeOpen] = useState(false);
+  const [isEditGradeOpen, setIsEditGradeOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  
+  const form = useForm<GradeFormValues>({
+    resolver: zodResolver(gradeSchema),
     defaultValues: {
       name: "",
     },
   });
-
+  
   const editForm = useForm<GradeFormValues>({
-    resolver: zodResolver(insertGradeSchema),
+    resolver: zodResolver(gradeSchema),
     defaultValues: {
-      name: "",
+      name: selectedGrade?.name || "",
     },
   });
-
+  
+  // Update edit form when selected grade changes
+  useEffect(() => {
+    if (selectedGrade) {
+      editForm.setValue("name", selectedGrade.name);
+    }
+  }, [selectedGrade, editForm]);
+  
   // Fetch grades
   const { data: grades = [], isLoading } = useQuery<Grade[]>({
     queryKey: ["/api/grades"],
   });
-
-  // Create grade
-  const createGrade = useMutation({
+  
+  // Add grade
+  const addGrade = useMutation({
     mutationFn: async (data: GradeFormValues) => {
       const res = await apiRequest("POST", "/api/grades", data);
       return await res.json();
@@ -55,11 +65,11 @@ export default function Grades() {
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Grade created successfully",
+        description: "Grade added successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/grades"] });
-      setIsAddDialogOpen(false);
-      addForm.reset();
+      setIsAddGradeOpen(false);
+      form.reset();
     },
     onError: (error: any) => {
       toast({
@@ -69,11 +79,11 @@ export default function Grades() {
       });
     },
   });
-
+  
   // Update grade
   const updateGrade = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: GradeFormValues }) => {
-      const res = await apiRequest("PUT", `/api/grades/${id}`, data);
+    mutationFn: async ({ id, data }: { id: number, data: GradeFormValues }) => {
+      const res = await apiRequest("PATCH", `/api/grades/${id}`, data);
       return await res.json();
     },
     onSuccess: () => {
@@ -82,8 +92,7 @@ export default function Grades() {
         description: "Grade updated successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/grades"] });
-      setIsEditDialogOpen(false);
-      editForm.reset();
+      setIsEditGradeOpen(false);
     },
     onError: (error: any) => {
       toast({
@@ -93,11 +102,15 @@ export default function Grades() {
       });
     },
   });
-
+  
   // Delete grade
   const deleteGrade = useMutation({
-    mutationFn: async (id: number) => {
-      const res = await apiRequest("DELETE", `/api/grades/${id}`);
+    mutationFn: async (gradeId: number) => {
+      const res = await apiRequest("DELETE", `/api/grades/${gradeId}`);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to delete grade");
+      }
       return await res.json();
     },
     onSuccess: () => {
@@ -106,7 +119,7 @@ export default function Grades() {
         description: "Grade deleted successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/grades"] });
-      setIsDeleteAlertOpen(false);
+      setIsDeleteConfirmOpen(false);
       setSelectedGrade(null);
     },
     onError: (error: any) => {
@@ -117,120 +130,162 @@ export default function Grades() {
       });
     },
   });
-
-  // Handle edit grade
-  const handleEditGrade = (grade: Grade) => {
-    setSelectedGrade(grade);
-    editForm.reset({
-      name: grade.name,
-    });
-    setIsEditDialogOpen(true);
+  
+  const onSubmit = (data: GradeFormValues) => {
+    addGrade.mutate(data);
   };
-
-  // Submit handlers
-  const onAddSubmit = (data: GradeFormValues) => {
-    createGrade.mutate(data);
-  };
-
+  
   const onEditSubmit = (data: GradeFormValues) => {
     if (selectedGrade) {
       updateGrade.mutate({ id: selectedGrade.id, data });
     }
   };
-
+  
   return (
     <PageWrapper title="Grades">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 text-transparent bg-clip-text">
-          Manage Grades
-        </h1>
-        <p className="text-neutral-600 mt-2">Add, edit, and delete grade levels for the school</p>
+      {/* Simplified Header Section */}
+      <div className="mb-8">
+        {/* Simple background with fewer elements */}
+        <div className="absolute -z-10 top-0 right-0 w-96 h-80 bg-indigo-50/30 rounded-full blur-3xl"></div>
+        
+        <div className="relative z-10">
+          {/* Cleaner title with simpler gradient */}
+          <h1 className="text-2xl font-bold mb-2 text-indigo-600">Manage Grades</h1>
+          <p className="text-slate-600 max-w-2xl">Create and manage grade levels for your school's structure.</p>
+        </div>
       </div>
-
-      <div className="mb-6 flex justify-end">
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90">
-              <Plus className="mr-2 h-4 w-4" /> Add Grade
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Grade</DialogTitle>
-              <DialogDescription>
-                Create a new grade level for the school.
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...addForm}>
-              <form onSubmit={addForm.handleSubmit(onAddSubmit)} className="space-y-4">
-                <FormField
-                  control={addForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Grade Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Grade 1" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <DialogFooter>
-                  <Button type="submit" disabled={createGrade.isPending}>
-                    {createGrade.isPending ? "Adding..." : "Add Grade"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+      
+      {/* Simplified Action Bar - Removed grade count indicator */}
+      <div className="mb-6 flex flex-wrap">
+        <div className="flex flex-wrap gap-3">
+          {/* Add Grade Button with simpler styling */}
+          <Dialog open={isAddGradeOpen} onOpenChange={setIsAddGradeOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                <Plus className="mr-2 h-4 w-4" /> 
+                <span>Add Grade</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="border-slate-200">
+              <DialogHeader>
+                <DialogTitle className="text-indigo-700 flex items-center">
+                  <GraduationCap className="h-5 w-5 text-indigo-500 mr-2" />
+                  Add New Grade
+                </DialogTitle>
+                <DialogDescription>
+                  Create a new grade level for your school.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Grade Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Grade 1" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <DialogFooter>
+                    <Button 
+                      type="submit" 
+                      disabled={addGrade.isPending}
+                      className="bg-indigo-600 hover:bg-indigo-700"
+                    >
+                      {addGrade.isPending ? "Adding..." : "Add Grade"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
-
-      <Card>
-        <CardHeader className="py-4">
-          <CardTitle className="text-lg">Grades</CardTitle>
+      
+      {/* Cleaner Card - Removed search input */}
+      <Card className="border-slate-200 shadow-sm overflow-hidden">
+        <CardHeader className="py-4 bg-slate-50 border-b border-slate-200 flex flex-row items-center">
+          <CardTitle className="text-lg text-slate-800 font-medium flex items-center">
+            <GraduationCap className="h-5 w-5 text-indigo-500 mr-2" />
+            <span>Grades Directory</span>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-auto">
+        
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-slate-50/70 border-b border-slate-200">
                 <TableRow>
-                  <TableHead>Grade Name</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-slate-500 font-medium py-3 text-sm">Grade Name</TableHead>
+                  <TableHead className="text-slate-500 font-medium py-3 text-sm text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
+              
               <TableBody>
-                {grades.map((grade) => (
-                  <TableRow key={grade.id}>
-                    <TableCell className="font-medium">{grade.name}</TableCell>
+                {grades.map(grade => (
+                  <TableRow 
+                    key={grade.id} 
+                    className="hover:bg-slate-50 border-b border-slate-100"
+                  >
+                    <TableCell className="font-medium text-slate-700">
+                      {grade.name}
+                    </TableCell>
+                    
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleEditGrade(grade)}
+                          onClick={() => {
+                            setSelectedGrade(grade);
+                            setIsEditGradeOpen(true);
+                          }}
+                          className="hover:bg-indigo-50 hover:text-indigo-600 h-8 w-8 p-0"
+                          title="Edit Grade"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
+                        
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => {
                             setSelectedGrade(grade);
-                            setIsDeleteAlertOpen(true);
+                            setIsDeleteConfirmOpen(true);
                           }}
+                          title="Delete Grade"
+                          className="hover:bg-rose-50 hover:text-rose-600 h-8 w-8 p-0"
                         >
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                          <Trash2 className="h-4 w-4 text-rose-500" />
                         </Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
+                
+                {/* Simplified Empty State */}
                 {grades.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={2} className="text-center py-8 text-neutral-500">
-                      No grades found. Add your first grade to get started.
+                    <TableCell colSpan={2} className="h-40 text-center">
+                      <div className="flex flex-col items-center justify-center text-slate-500 py-6">
+                        <GraduationCap className="h-8 w-8 text-slate-300 mb-2" />
+                        <p className="text-slate-600">No grades found</p>
+                        <p className="text-xs text-slate-400 mt-1">Add your first grade to get started</p>
+                        <Button 
+                          onClick={() => setIsAddGradeOpen(true)} 
+                          className="mt-4 bg-indigo-600"
+                          size="sm"
+                        >
+                          <Plus className="h-4 w-4 mr-2" /> Add Grade
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )}
@@ -239,16 +294,20 @@ export default function Grades() {
           </div>
         </CardContent>
       </Card>
-
+      
       {/* Edit Grade Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+      <Dialog open={isEditGradeOpen} onOpenChange={setIsEditGradeOpen}>
+        <DialogContent className="border-slate-200">
           <DialogHeader>
-            <DialogTitle>Edit Grade</DialogTitle>
+            <DialogTitle className="text-indigo-700 flex items-center">
+              <Pencil className="h-5 w-5 text-indigo-500 mr-2" /> 
+              Edit Grade
+            </DialogTitle>
             <DialogDescription>
-              Update the grade level name.
+              Update the details for {selectedGrade?.name}.
             </DialogDescription>
           </DialogHeader>
+          
           <Form {...editForm}>
             <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
               <FormField
@@ -264,8 +323,20 @@ export default function Grades() {
                   </FormItem>
                 )}
               />
-              <DialogFooter>
-                <Button type="submit" disabled={updateGrade.isPending}>
+              
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEditGradeOpen(false)}
+                  className="border-slate-200 text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={updateGrade.isPending}
+                  className="bg-indigo-600 hover:bg-indigo-700"
+                >
                   {updateGrade.isPending ? "Updating..." : "Update Grade"}
                 </Button>
               </DialogFooter>
@@ -273,24 +344,31 @@ export default function Grades() {
           </Form>
         </DialogContent>
       </Dialog>
-
-      {/* Delete Confirmation */}
-      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
-        <AlertDialogContent>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <AlertDialogContent className="border-rose-100">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the grade "{selectedGrade?.name}".
-              This action cannot be undone.
+            <div className="bg-rose-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="h-6 w-6 text-rose-500" />
+            </div>
+            <AlertDialogTitle className="text-rose-600 text-center">Delete Grade?</AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              This will permanently delete <span className="font-medium">{selectedGrade?.name}</span> and remove any associated teacher assignments.
+              <br />This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel className="text-slate-700 hover:bg-slate-50 border-slate-200">Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-500 hover:bg-red-600"
-              onClick={() => selectedGrade && deleteGrade.mutate(selectedGrade.id)}
+              className="bg-rose-500 hover:bg-rose-600 text-white"
+              onClick={() => {
+                if (selectedGrade) {
+                  deleteGrade.mutate(selectedGrade.id);
+                }
+              }}
             >
-              {deleteGrade.isPending ? "Deleting..." : "Delete"}
+              {deleteGrade.isPending ? "Deleting..." : "Yes, Delete Grade"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

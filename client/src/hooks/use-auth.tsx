@@ -17,6 +17,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   // Check if user is already logged in
+  const userQuery = useQuery({
+    queryKey: ["/api/me"],
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
+    select: (data: User) => data,  // Add type assertion here
+    onSuccess: (data: User) => {
+      setUser(data);
+    }
+  });
+
   const { data: userData, isLoading } = useQuery<User | null>({
     queryKey: ["/api/user"],
     queryFn: async () => {

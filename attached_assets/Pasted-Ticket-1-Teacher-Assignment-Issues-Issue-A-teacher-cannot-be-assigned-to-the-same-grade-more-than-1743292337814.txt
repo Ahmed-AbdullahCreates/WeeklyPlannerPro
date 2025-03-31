@@ -1,0 +1,89 @@
+Ticket 1: Teacher Assignment Issues
+Issue:
+
+A teacher cannot be assigned to the same grade more than once.
+
+Expected Behavior:
+
+A teacher should be able to be assigned to the same grade multiple times if needed.
+
+Steps to Reproduce:
+
+Go to the admin panel → Assign Teacher to Grade.
+
+Assign a teacher to a specific grade.
+
+Try to assign the same teacher to the same grade again.
+
+Fix:
+
+Update the logic to allow multiple assignments of a teacher to the same grade.
+
+Ensure that existing assignments do not block new assignments for the same grade.
+
+Ticket 2: Subject Assignment Dropdown Issue
+Issue:
+
+When assigning a subject to a teacher, the assigned grades do not appear in the dropdown.
+
+Expected Behavior:
+
+The dropdown should display all grades the teacher is already assigned to, allowing selection when assigning a subject.
+
+Steps to Reproduce:
+
+Go to the admin panel → Assign Teacher to Subject.
+
+Select a teacher who is already assigned to one or more grades.
+
+Check the dropdown for grades; it does not show assigned grades.
+
+Fix:
+
+Ensure that the system fetches and displays the teacher's assigned grades in the dropdown when assigning a subject.
+
+Verify that the filtering logic correctly maps subjects to available grades.
+
+Ticket 3: Weekly Plan Visibility
+Issue:
+
+No clear way to view the weekly plan on the website.
+
+Expected Behavior:
+
+Admin should have a dedicated section to view all weekly plans.
+
+Fix:
+
+Add a weekly plan view section accessible from the admin panel.
+
+Display all previous and active weekly plans in a structured format.
+
+Ticket 4: Dashboard Redesign
+Issue:
+
+The current dashboard is cluttered and unclear.
+
+Expected Behavior:
+
+A streamlined dashboard that shows only essential information.
+
+Fix:
+
+Remove:
+
+Quick actions
+
+Activity planning weeks (as a separate entity)
+
+Keep & Modify:
+
+Statistics at the top: Number of teachers, grades, subjects, and active weeks.
+
+Activity Planning Weeks:
+
+Show current active week(s) at the top.
+
+List previous weeks' plans in a structured format.
+
+Allow adding/removing active weeks (already available in the system).

@@ -143,29 +143,36 @@ export default function PlanningWeeks() {
 
   return (
     <PageWrapper title="Planning Weeks">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 text-transparent bg-clip-text">
-          Manage Planning Weeks
-        </h1>
-        <p className="text-neutral-600 mt-2">
-          Define planning periods for teachers to create their weekly plans
-        </p>
+      {/* Simplified Header Section */}
+      <div className="mb-8">
+        <div className="absolute -z-10 top-0 right-0 w-96 h-80 bg-indigo-50/30 rounded-full blur-3xl"></div>
+        
+        <div className="relative z-10">
+          <h1 className="text-2xl font-bold mb-2 text-indigo-600">Manage Planning Weeks</h1>
+          <p className="text-slate-600 max-w-2xl">Configure academic planning weeks for teacher lesson planning.</p>
+        </div>
       </div>
 
-      <div className="mb-6 flex justify-end">
+      {/* Simplified Action Bar */}
+      <div className="mb-6 flex flex-wrap">
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90">
-              <Plus className="mr-2 h-4 w-4" /> Add Planning Week
+            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+              <Plus className="mr-2 h-4 w-4" /> 
+              <span>Add Planning Week</span>
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="border-slate-200">
             <DialogHeader>
-              <DialogTitle>Add New Planning Week</DialogTitle>
+              <DialogTitle className="text-indigo-700 flex items-center">
+                <Calendar className="h-5 w-5 text-indigo-500 mr-2" />
+                Add Planning Week
+              </DialogTitle>
               <DialogDescription>
-                Create a new weekly planning period for teachers.
+                Create a new planning week period for teachers.
               </DialogDescription>
             </DialogHeader>
+            
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -267,41 +274,52 @@ export default function PlanningWeeks() {
         </Dialog>
       </div>
 
-      <Card>
-        <CardHeader className="py-4">
-          <CardTitle className="text-lg">Planning Weeks</CardTitle>
+      {/* Enhanced Card */}
+      <Card className="border-slate-200 shadow-sm overflow-hidden">
+        <CardHeader className="py-4 bg-slate-50 border-b border-slate-200 flex flex-row items-center">
+          <CardTitle className="text-lg text-slate-800 font-medium flex items-center">
+            <Calendar className="h-5 w-5 text-indigo-500 mr-2" />
+            <span>Planning Weeks</span>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-auto">
+        
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-slate-50/70 border-b border-slate-200">
                 <TableRow>
-                  <TableHead>Week</TableHead>
-                  <TableHead>Dates</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-slate-500 font-medium py-3 text-sm">Week</TableHead>
+                  <TableHead className="text-slate-500 font-medium py-3 text-sm">Dates</TableHead>
+                  <TableHead className="text-slate-500 font-medium py-3 text-sm">Status</TableHead>
+                  <TableHead className="text-slate-500 font-medium py-3 text-sm text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
+              
               <TableBody>
                 {planningWeeks.map((week) => (
-                  <TableRow key={week.id}>
+                  <TableRow 
+                    key={week.id}
+                    className="hover:bg-slate-50 border-b border-slate-100"
+                  >
                     <TableCell>
                       <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-2 text-primary" />
+                        <div className="p-1.5 rounded-md bg-indigo-50 text-indigo-500 mr-2">
+                          <Calendar className="h-4 w-4" />
+                        </div>
                         <div>
-                          <div className="font-medium">Week {week.weekNumber}</div>
-                          <div className="text-sm text-neutral-500">{week.year}</div>
+                          <div className="font-medium text-slate-700">Week {week.weekNumber}</div>
+                          <div className="text-xs text-slate-500">{week.year}</div>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-slate-600">
                       {format(new Date(week.startDate), "MMM d, yyyy")} - {format(new Date(week.endDate), "MMM d, yyyy")}
                     </TableCell>
                     <TableCell>
                       {week.isActive ? (
-                        <Badge className="bg-green-500">Active</Badge>
+                        <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-0">Active</Badge>
                       ) : (
-                        <Badge variant="outline">Inactive</Badge>
+                        <Badge variant="outline" className="text-slate-600 border-slate-200 bg-slate-50">Inactive</Badge>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -310,11 +328,16 @@ export default function PlanningWeeks() {
                           variant="ghost"
                           size="sm"
                           onClick={() => toggleWeekActive.mutate(week.id)}
+                          className={week.isActive 
+                            ? "hover:bg-rose-50 hover:text-rose-600 h-8 w-8 p-0" 
+                            : "hover:bg-emerald-50 hover:text-emerald-600 h-8 w-8 p-0"
+                          }
+                          title={week.isActive ? "Deactivate" : "Activate"}
                         >
                           {week.isActive ? (
-                            <PowerOff className="h-4 w-4 text-red-500" title="Deactivate" />
+                            <PowerOff className="h-4 w-4" />
                           ) : (
-                            <Power className="h-4 w-4 text-green-500" title="Activate" />
+                            <Power className="h-4 w-4" />
                           )}
                         </Button>
                         <Button
@@ -324,17 +347,32 @@ export default function PlanningWeeks() {
                             setSelectedWeek(week);
                             setIsDeleteAlertOpen(true);
                           }}
+                          className="hover:bg-rose-50 hover:text-rose-600 h-8 w-8 p-0"
+                          title="Delete Week"
                         >
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                          <Trash2 className="h-4 w-4 text-rose-500" />
                         </Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
+                
+                {/* Empty State */}
                 {planningWeeks.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-neutral-500">
-                      No planning weeks found. Add your first planning week to get started.
+                    <TableCell colSpan={4} className="h-40 text-center">
+                      <div className="flex flex-col items-center justify-center text-slate-500 py-6">
+                        <Calendar className="h-8 w-8 text-slate-300 mb-2" />
+                        <p className="text-slate-600">No planning weeks found</p>
+                        <p className="text-xs text-slate-400 mt-1">Add your first planning week to get started</p>
+                        <Button 
+                          onClick={() => setIsAddDialogOpen(true)} 
+                          className="mt-4 bg-indigo-600"
+                          size="sm"
+                        >
+                          <Plus className="h-4 w-4 mr-2" /> Add Week
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )}
@@ -344,23 +382,28 @@ export default function PlanningWeeks() {
         </CardContent>
       </Card>
 
-      {/* Delete Confirmation */}
+      {/* Delete Alert Dialog with consistent styling */}
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="border-rose-100">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <div className="bg-rose-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="h-6 w-6 text-rose-500" />
+            </div>
+            <AlertDialogTitle className="text-rose-600 text-center">Delete Planning Week?</AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
               This will permanently delete Week {selectedWeek?.weekNumber} ({selectedWeek?.year}).
-              This action cannot be undone.
+              <br />This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel className="text-slate-700 hover:bg-slate-50 border-slate-200">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-500 hover:bg-red-600"
+              className="bg-rose-500 hover:bg-rose-600 text-white"
               onClick={() => selectedWeek && deletePlanningWeek.mutate(selectedWeek.id)}
             >
-              {deletePlanningWeek.isPending ? "Deleting..." : "Delete"}
+              {deletePlanningWeek.isPending ? "Deleting..." : "Yes, Delete Week"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
